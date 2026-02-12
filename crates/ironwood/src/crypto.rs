@@ -1,5 +1,4 @@
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use std::fmt::Debug;
 
 use crate::types::Addr;
 
@@ -51,12 +50,14 @@ impl Crypto {
     }
 
     /// Get our public key as an Addr.
+    #[allow(dead_code)]
     pub fn addr(&self) -> Addr {
         Addr(self.public_key)
     }
 }
 
 /// Compare two public keys (for root election: smallest key wins).
+#[allow(dead_code)]
 pub(crate) fn key_less(a: &PublicKey, b: &PublicKey) -> bool {
     a < b
 }

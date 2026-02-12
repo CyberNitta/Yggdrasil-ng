@@ -194,6 +194,7 @@ pub(crate) enum RouterAction {
         traffic: crate::traffic::TrafficPacket,
     },
     /// Notify application of new path.
+    #[allow(dead_code)]
     PathNotifyCallback {
         key: PublicKey,
     },
@@ -469,6 +470,7 @@ impl Router {
     }
 
     /// Handle an incoming signature request from a peer.
+    #[allow(dead_code)]
     pub fn handle_request(&self, peer: &PeerEntry) -> RouterAction {
         // We always respond with a signature for the requesting peer
         let req = self.requests.get(&peer.key);
@@ -1435,7 +1437,7 @@ mod tests {
         router.become_root();
         let self_key = router.crypto.public_key;
 
-        let old_seq = router.infos[&self_key].seq;
+        let _old_seq = router.infos[&self_key].seq;
 
         // Create a new announcement with higher seq
         let key2 = SigningKey::generate(&mut OsRng);

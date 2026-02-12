@@ -13,7 +13,7 @@ const IPV6_HEADER_LEN: usize = 40;
 
 /// Cached mapping from address/subnet to public key.
 struct KeyInfo {
-    key: [u8; 32],
+    _key: [u8; 32],
     address: Address,
     subnet: Subnet,
     last_seen: Instant,
@@ -242,7 +242,7 @@ impl ReadWriteCloser {
 
         // Update or insert key info
         let info = KeyInfo {
-            key,
+            _key: key,
             address,
             subnet,
             last_seen: now,

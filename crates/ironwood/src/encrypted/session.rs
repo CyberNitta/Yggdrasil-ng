@@ -22,6 +22,7 @@ use super::crypto::{
 // Constants
 // ---------------------------------------------------------------------------
 
+#[allow(dead_code)]
 const SESSION_TIMEOUT: Duration = Duration::from_secs(60);
 
 /// Minimum traffic overhead: type(1) + varint(1) + varint(1) + varint(1) + box_overhead(16) + nextPub(32)
@@ -176,7 +177,7 @@ impl SessionInit {
 pub(crate) struct SessionInfo {
     // Remote state
     pub seq: u64,
-    pub ed: PublicKey,
+    pub _ed: PublicKey,
     pub remote_key_seq: u64,
     pub current: CurvePublicKey, // remote's current key
     pub next: CurvePublicKey,    // remote's next key
@@ -203,7 +204,7 @@ pub(crate) struct SessionInfo {
     pub next_recv_nonce: u64,
 
     // Timing
-    pub since: Instant,
+    pub _since: Instant,
     pub rotated: Option<Instant>,
     pub last_activity: Instant,
 
@@ -231,7 +232,7 @@ impl SessionInfo {
 
         Self {
             seq: seq.wrapping_sub(1), // so first update works
-            ed: *ed,
+            _ed: *ed,
             remote_key_seq: 0,
             current,
             next,
@@ -250,7 +251,7 @@ impl SessionInfo {
             next_send_nonce: 0,
             next_recv_shared,
             next_recv_nonce: 0,
-            since: Instant::now(),
+            _since: Instant::now(),
             rotated: None,
             last_activity: Instant::now(),
             rx: 0,
@@ -452,6 +453,7 @@ impl SessionInfo {
     }
 
     /// Check if the session has timed out.
+    #[allow(dead_code)]
     pub fn is_expired(&self) -> bool {
         self.last_activity.elapsed() > SESSION_TIMEOUT
     }
@@ -475,7 +477,7 @@ pub(crate) struct SessionBuffer {
     pub init: SessionInit,
     pub current_priv: CurvePrivateKey,
     pub next_priv: CurvePrivateKey,
-    pub created: Instant,
+    pub _created: Instant,
 }
 
 // ---------------------------------------------------------------------------
@@ -702,7 +704,7 @@ impl SessionManager {
                 init: SessionInit::new(&current_pub, &next_pub, 0),
                 current_priv,
                 next_priv,
-                created: Instant::now(),
+                _created: Instant::now(),
             }
         });
 
@@ -752,9 +754,10 @@ impl SessionManager {
     }
 
     /// Clean up expired sessions and buffers.
+    #[allow(dead_code)]
     pub fn cleanup_expired(&mut self) {
         self.sessions.retain(|_, info| !info.is_expired());
-        self.buffers.retain(|_, buf| buf.created.elapsed() < SESSION_TIMEOUT);
+        self.buffers.retain(|_, buf| buf._created.elapsed() < SESSION_TIMEOUT);
     }
 }
 
@@ -782,8 +785,8 @@ mod tests {
 
     #[test]
     fn init_encrypt_decrypt() {
-        let (priv_a, pub_a, curve_priv_a) = make_keys();
-        let (priv_b, pub_b, curve_priv_b) = make_keys();
+        let (priv_a, pub_a, _curve_priv_a) = make_keys();
+        let (_priv_b, pub_b, curve_priv_b) = make_keys();
 
         let (current, _) = new_box_keys();
         let (next, _) = new_box_keys();

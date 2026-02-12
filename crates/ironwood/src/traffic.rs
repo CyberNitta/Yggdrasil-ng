@@ -33,6 +33,7 @@ impl TrafficPacket {
     }
 
     /// Estimated wire size of the packet (used for queue size accounting).
+    #[allow(dead_code)]
     pub fn wire_size(&self) -> u64 {
         use crate::crypto::PUBLIC_KEY_SIZE;
         use crate::wire::{path_size, uvarint_size};
@@ -45,6 +46,7 @@ impl TrafficPacket {
     }
 
     /// Copy contents from another traffic packet, reusing existing allocations.
+    #[allow(dead_code)]
     pub fn copy_from(&mut self, other: &TrafficPacket) {
         self.path.clear();
         self.path.extend_from_slice(&other.path);
@@ -63,6 +65,7 @@ impl TrafficPacket {
 // ---------------------------------------------------------------------------
 
 /// Info about a single queued packet.
+#[allow(dead_code)]
 struct PqPacketInfo {
     packet: TrafficPacket,
     size: u64,
@@ -70,6 +73,7 @@ struct PqPacketInfo {
 }
 
 /// Packets from a single source to a single destination.
+#[allow(dead_code)]
 struct PqSource {
     key: PublicKey,
     infos: Vec<PqPacketInfo>,
@@ -77,6 +81,7 @@ struct PqSource {
 }
 
 /// All packets to a single destination, grouped by source.
+#[allow(dead_code)]
 struct PqDest {
     key: PublicKey,
     sources: Vec<PqSource>,
@@ -88,11 +93,30 @@ struct PqDest {
 /// - `push` adds a packet
 /// - `pop` removes the oldest packet across all flows (min-time at front)
 /// - `drop` removes the oldest packet from the largest flow (back-pressure fairness)
+#[allow(dead_code)]
 pub(crate) struct PacketQueue {
     dests: Vec<PqDest>,
     size: u64,
 }
 
+#[allow(dead_code)]
+impl PacketQueue {
+    /// Peek at the oldest packet without removing it.
+    pub fn peek(&self) -> Option<&TrafficPacket> {
+        if self.dests.is_empty() {
+            return None;
+        }
+        // Find the oldest across all dests/sources
+        self.dests
+            .iter()
+            .flat_map(|d| d.sources.iter())
+            .flat_map(|s| s.infos.first())
+            .min_by_key(|info| info.time)
+            .map(|info| &info.packet)
+    }
+}
+
+#[allow(dead_code)]
 impl PacketQueue {
     pub fn new() -> Self {
         Self {
@@ -243,20 +267,6 @@ impl PacketQueue {
         }
 
         true
-    }
-
-    /// Peek at the oldest packet without removing it.
-    pub fn peek(&self) -> Option<&TrafficPacket> {
-        if self.dests.is_empty() {
-            return None;
-        }
-        // Find the oldest across all dests/sources
-        self.dests
-            .iter()
-            .flat_map(|d| d.sources.iter())
-            .flat_map(|s| s.infos.first())
-            .min_by_key(|info| info.time)
-            .map(|info| &info.packet)
     }
 }
 

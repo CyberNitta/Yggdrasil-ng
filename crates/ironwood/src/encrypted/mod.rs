@@ -37,7 +37,7 @@ pub struct EncryptedPacketConn {
     /// Our Ed25519 signing key.
     signing_key: SigningKey,
     /// Our Curve25519 private key (derived from Ed25519).
-    curve_priv: CurvePrivateKey,
+    _curve_priv: CurvePrivateKey,
     /// Session manager (shared with reader task).
     sessions: Arc<Mutex<SessionManager>>,
     /// Channel for delivering decrypted traffic to read_from.
@@ -81,7 +81,7 @@ impl EncryptedPacketConn {
         Self {
             inner,
             signing_key: secret,
-            curve_priv,
+            _curve_priv: curve_priv,
             sessions,
             recv_rx: Mutex::new(recv_rx),
             recv_tx,

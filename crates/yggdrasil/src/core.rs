@@ -111,7 +111,7 @@ impl Core {
                 }
                 TYPE_SESSION_PROTO => {
                     // TODO implement real handling
-                    let key = addr; // The Addr contains the public key
+                    let _key = addr; // The Addr contains the public key
                     let payload_len = n - 1;
                     buf[..payload_len].copy_from_slice(&inner_buf[1..n]);
                     return Ok((payload_len, addr));

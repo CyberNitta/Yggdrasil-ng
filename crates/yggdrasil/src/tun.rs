@@ -48,17 +48,15 @@ impl TunAdapter {
             .map_err(|e| format!("invalid address '{}': {}", ip_str, e))?;
 
         // Create TUN device using tun-rs DeviceBuilder
-        let mut builder = tun_rs::DeviceBuilder::new()
-            .name(tun_name)
-            .ipv6(ip, 7u8)
-            .mtu(mtu);
+        let builder = tun_rs::DeviceBuilder::new();
 
-        // Only call device_guid on Windows
-        if cfg!(windows) {
-            builder = builder.device_guid(0x8f59971a78724aa6b2eb061fc4e9d0a7);
-        }
+        #[cfg(target_os = "windows")]
+        let builder = builder.device_guid(0x8f59971a78724aa6b2eb061fc4e9d0a7); // Yggdrasil uses this
 
         let device = builder
+            .name(tun_name)
+            .ipv6(ip, 7u8) // /7 prefix for 02xx::/7
+            .mtu(mtu)
             .build_async()
             .map_err(|e| format!("failed to create TUN device: {}", e))?;
 

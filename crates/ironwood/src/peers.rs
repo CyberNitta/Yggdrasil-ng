@@ -27,6 +27,7 @@ pub(crate) enum PeerMessage {
     /// Raw frame bytes to write (already length-prefixed).
     SendFrame(Vec<u8>),
     /// Flush the write buffer.
+    #[allow(dead_code)]
     Flush,
 }
 

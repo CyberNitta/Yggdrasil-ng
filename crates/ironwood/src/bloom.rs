@@ -14,6 +14,7 @@ use crate::crypto::PublicKey;
 pub const BLOOM_FILTER_BITS: usize = 8192;
 pub const BLOOM_FILTER_K: usize = 8;
 pub const BLOOM_FILTER_U64S: usize = BLOOM_FILTER_BITS / 64; // 128
+#[allow(dead_code)]
 pub const BLOOM_FILTER_FLAGS: usize = BLOOM_FILTER_U64S / 8; // 16
 
 /// A Bloom filter with fixed 8192 bits and 8 hash functions.
@@ -84,6 +85,7 @@ impl BloomFilter {
     }
 
     /// Clear all bits from the filter.
+    #[allow(dead_code)]
     pub fn clear(&mut self) {
         self.bits = [0u64; BLOOM_FILTER_U64S];
     }
@@ -401,6 +403,7 @@ fn location(h: &[u64; 4], i: usize, m: usize) -> usize {
 /// - [remaining u64s in big-endian]
 ///
 /// This is compatible with the Go library's wire format.
+#[allow(dead_code)]
 pub fn encode_bloom(data: &[u64; BLOOM_FILTER_U64S]) -> Vec<u8> {
     let mut flags0 = [0u8; BLOOM_FILTER_FLAGS];
     let mut flags1 = [0u8; BLOOM_FILTER_FLAGS];
@@ -428,6 +431,7 @@ pub fn encode_bloom(data: &[u64; BLOOM_FILTER_U64S]) -> Vec<u8> {
 /// Decode a bloom filter from wire format.
 ///
 /// Returns the decoded u64 array or an error if the format is invalid.
+#[allow(dead_code)]
 pub fn decode_bloom(data: &[u8]) -> Result<[u64; BLOOM_FILTER_U64S], BloomError> {
     if data.len() < BLOOM_FILTER_FLAGS * 2 {
         return Err(BloomError::Decode("Input too short"));
@@ -471,6 +475,7 @@ pub fn decode_bloom(data: &[u8]) -> Result<[u64; BLOOM_FILTER_U64S], BloomError>
 
 /// Error type for bloom filter operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum BloomError {
     Decode(&'static str),
 }

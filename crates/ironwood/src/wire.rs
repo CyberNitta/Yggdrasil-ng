@@ -112,6 +112,7 @@ pub(crate) fn encode_path(out: &mut Vec<u8>, path: &[PeerPort]) {
 }
 
 /// Compute the wire size of a path.
+#[allow(dead_code)]
 pub(crate) fn path_size(path: &[PeerPort]) -> usize {
     let mut size = 0;
     for &port in path {
@@ -150,6 +151,7 @@ impl<'a> WireReader<'a> {
         Self { data }
     }
 
+    #[allow(dead_code)]
     pub fn remaining(&self) -> usize {
         self.data.len()
     }
@@ -193,6 +195,7 @@ impl<'a> WireReader<'a> {
         Ok(path)
     }
 
+    #[allow(dead_code)]
     pub fn read_bytes(&mut self, n: usize) -> Result<&'a [u8], Error> {
         if self.data.len() < n {
             return Err(Error::Decode);
@@ -215,6 +218,7 @@ pub(crate) struct SigReq {
 }
 
 impl SigReq {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         uvarint_size(self.seq) + uvarint_size(self.nonce)
     }
@@ -241,6 +245,7 @@ pub(crate) struct SigRes {
 }
 
 impl SigRes {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         uvarint_size(self.seq) + uvarint_size(self.nonce) + uvarint_size(self.port) + SIGNATURE_SIZE
     }
@@ -276,6 +281,7 @@ pub(crate) struct Announce {
 }
 
 impl Announce {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         PUBLIC_KEY_SIZE + PUBLIC_KEY_SIZE + self.sig_res.size() + SIGNATURE_SIZE
     }
@@ -314,6 +320,7 @@ pub(crate) struct PathLookup {
 }
 
 impl PathLookup {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         PUBLIC_KEY_SIZE + PUBLIC_KEY_SIZE + path_size(&self.from)
     }
@@ -345,6 +352,7 @@ pub(crate) struct PathNotifyInfo {
 }
 
 impl PathNotifyInfo {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         uvarint_size(self.seq) + path_size(&self.path) + SIGNATURE_SIZE
     }
@@ -374,6 +382,7 @@ pub(crate) struct PathNotify {
 }
 
 impl PathNotify {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         path_size(&self.path)
             + uvarint_size(self.watermark)
@@ -420,6 +429,7 @@ pub(crate) struct PathBroken {
 }
 
 impl PathBroken {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         path_size(&self.path) + uvarint_size(self.watermark) + PUBLIC_KEY_SIZE + PUBLIC_KEY_SIZE
     }
@@ -461,6 +471,7 @@ pub(crate) struct Traffic {
 }
 
 impl Traffic {
+    #[allow(dead_code)]
     pub fn size(&self) -> usize {
         path_size(&self.path)
             + path_size(&self.from)
@@ -505,9 +516,13 @@ impl Traffic {
 /// Bloom filter constants matching the Go implementation.
 pub(crate) const BLOOM_FILTER_FLAGS: usize = 16; // bytes for zero/one flags
 pub(crate) const BLOOM_FILTER_U64S: usize = 128; // number of u64s in backing array
+#[allow(dead_code)]
 pub(crate) const BLOOM_FILTER_BYTES: usize = 1024; // total bytes
+#[allow(dead_code)]
 pub(crate) const BLOOM_FILTER_BITS: usize = 8192; // total bits
+#[allow(dead_code)]
 pub(crate) const BLOOM_FILTER_F: usize = 16; // BLOOM_FILTER_U64S / 8
+#[allow(dead_code)]
 pub(crate) const BLOOM_FILTER_K: usize = 8; // number of hash functions
 
 /// Encode a bloom filter's backing u64 array with compression.
@@ -564,6 +579,7 @@ pub(crate) fn decode_bloom(data: &[u8]) -> Result<[u64; BLOOM_FILTER_U64S], Erro
 }
 
 /// Compute the wire size of a bloom filter.
+#[allow(dead_code)]
 pub(crate) fn bloom_wire_size(data: &[u64; BLOOM_FILTER_U64S]) -> usize {
     let mut size = BLOOM_FILTER_FLAGS * 2; // flags0 + flags1
     for &u in data.iter() {
@@ -590,6 +606,7 @@ pub(crate) fn encode_frame(packet_type: PacketType, payload: &[u8]) -> Vec<u8> {
 
 /// Decode a frame header from the front of `data`.
 /// Returns (packet_type, payload_slice, total_frame_bytes_consumed).
+#[allow(dead_code)]
 pub(crate) fn decode_frame(data: &[u8]) -> Result<(PacketType, &[u8], usize), Error> {
     let (length, len_bytes) = decode_uvarint(data).ok_or(Error::Decode)?;
     let length = length as usize;

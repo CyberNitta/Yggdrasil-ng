@@ -40,6 +40,7 @@ async fn connect_nodes(
 
 /// Read the next non-empty packet from a PacketConn, with timeout.
 /// Skips empty packets that result from path lookups.
+#[allow(dead_code)]
 async fn read_nonempty(
     conn: &(dyn PacketConn + Send + Sync),
     buf: &mut [u8],

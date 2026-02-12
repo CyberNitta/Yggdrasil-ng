@@ -130,6 +130,7 @@ impl Pathfinder {
     }
 
     /// Check if a rumor lookup should be throttled.
+    #[allow(dead_code)]
     pub fn should_throttle_rumor(
         &self,
         xformed_dest: &PublicKey,
