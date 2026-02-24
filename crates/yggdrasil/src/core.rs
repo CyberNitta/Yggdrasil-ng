@@ -322,6 +322,7 @@ impl Core {
     }
 
     /// Get link-level peer info merged with ironwood RTT/cost (for admin getPeers).
+    /// Returns all configured peers (with up=false if disconnected) plus active inbound peers.
     pub async fn get_peers(&self) -> Vec<LinkPeerInfo> {
         let mut peers = self.active_links.get_peers().await;
         // Merge latency/cost from ironwood router
@@ -332,6 +333,29 @@ impl Core {
                 p.cost = iw.cost;
             }
         }
+
+        // Add configured but currently disconnected peers
+        let configured = self.links.lock().await.get_configured_peers().await;
+        for (uri, last_error) in configured {
+            if !peers.iter().any(|p| p.uri == uri) {
+                peers.push(LinkPeerInfo {
+                    uri,
+                    up: false,
+                    inbound: false,
+                    key: [0u8; 32],
+                    priority: 0,
+                    rx_bytes: 0,
+                    tx_bytes: 0,
+                    rx_rate: 0,
+                    tx_rate: 0,
+                    uptime_secs: 0.0,
+                    latency_ms: 0.0,
+                    cost: 0,
+                    last_error,
+                });
+            }
+        }
+        peers.sort_by(|a, b| a.uri.cmp(&b.uri));
         peers
     }
 

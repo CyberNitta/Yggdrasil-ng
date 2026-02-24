@@ -292,11 +292,7 @@ impl Blooms {
             .map(|(k, _)| *k)
             .collect();
 
-        tracing::debug!(
-            "blooms_maintenance: {} on-tree peers, self_parent={:?}",
-            on_tree_keys.len(),
-            hex::encode(&self_parent[..8]),
-        );
+        tracing::trace!("blooms_maintenance: {} on-tree peers, self_parent={:?}", on_tree_keys.len(), hex::encode(&self_parent[..8]));
 
         for k in on_tree_keys {
             let z_dirty = self.blooms[&k].z_dirty;
@@ -306,7 +302,7 @@ impl Blooms {
             let pbi = self.blooms.get_mut(&k).unwrap();
             pbi.seq += 1;
             if is_new || pbi.seq >= 3600 {
-                tracing::debug!(
+                tracing::trace!(
                     "blooms_maintenance: sending bloom to {:?} (is_new={}, seq={}, non_zero_bits={})",
                     hex::encode(&k[..8]),
                     is_new,

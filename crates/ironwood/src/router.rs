@@ -1011,7 +1011,7 @@ impl Router {
         for k in &peer_keys {
             let (_, peer_path) = self.get_root_and_path(k);
             let dist = self.get_dist(path, k);
-            tracing::debug!("  Peer {:02x?} path={:?} dist={} (closer={}) best_dist={}", &k[..8], peer_path, dist, dist < best_dist, best_dist);
+            tracing::trace!("  Peer {:02x?} path={:?} dist={} (closer={}) best_dist={}", hex::encode(&k[..8]), peer_path, dist, dist < best_dist, best_dist);
             if dist < best_dist {
                 if let Some(peers) = self.peers.get(k) {
                     for (_, entry) in peers {

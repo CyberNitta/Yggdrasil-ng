@@ -432,6 +432,8 @@ pub struct Links {
     retry_notify: Arc<Notify>,
     /// Global semaphore shared across ALL listeners — enforces total incoming connection limit.
     connection_limiter: Arc<Semaphore>,
+    /// Last error per configured peer URI (shared with reconnect tasks).
+    peer_errors: Arc<Mutex<HashMap<String, Option<String>>>>,
 }
 
 impl Links {
@@ -445,12 +447,25 @@ impl Links {
             rate_handle: None,
             retry_notify: Arc::new(Notify::new()),
             connection_limiter: Arc::new(Semaphore::new(MAX_CONCURRENT_INCOMING)),
+            peer_errors: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
     /// Wake all sleeping peer reconnect loops so they retry immediately.
     pub fn retry_peers_now(&self) {
         self.retry_notify.notify_waiters();
+    }
+
+    /// Get the list of all configured (outbound) peer URIs with their last errors.
+    pub async fn get_configured_peers(&self) -> Vec<(String, Option<String>)> {
+        let errors = self.peer_errors.lock().await;
+        self.peers
+            .keys()
+            .map(|uri| {
+                let err = errors.get(uri).cloned().flatten();
+                (uri.clone(), err)
+            })
+            .collect()
     }
 
     /// Set the core reference. Must be called before listen/add_peer.
@@ -650,6 +665,10 @@ impl Links {
             None
         };
 
+        let peer_errors = self.peer_errors.clone();
+        // Initialize error entry for this peer
+        peer_errors.lock().await.insert(uri.to_string(), None);
+
         let handle = tokio::spawn(async move {
             let mut backoff: u32 = 0;
             loop {
@@ -682,10 +701,12 @@ impl Links {
                             match connector.connect(server_name, stream).await {
                                 Ok(tls_stream) => Stream::TlsClient(tls_stream),
                                 Err(e) => {
-                                    tracing::debug!("TLS handshake failed to {}: {}", target, e);
+                                    let err_msg = format!("TLS handshake failed: {}", e);
+                                    tracing::debug!("{} to {}", err_msg, target);
+                                    peer_errors.lock().await.insert(uri_str.clone(), Some(err_msg));
                                     // Continue to backoff logic below
-                                    backoff = (backoff + 1).min(32);
-                                    let wait = Duration::from_secs(1u64 << backoff.min(31))
+                                    backoff = (backoff + 1).min(7);
+                                    let wait = Duration::from_secs(1u64 << backoff.min(7))
                                         .min(options.max_backoff);
                                     tokio::select! {
                                         _ = cancel_clone.cancelled() => break,
@@ -699,29 +720,36 @@ impl Links {
                             Stream::Tcp(stream)
                         };
 
+                        // Connected successfully — clear error
+                        peer_errors.lock().await.insert(uri_str.clone(), None);
+
                         match handle_connection(LinkType::Persistent, options.clone(), wrapped_stream, &core, &active, &uri_str).await {
                             Ok(()) => {
                                 // Clean disconnection - reset backoff
+                                peer_errors.lock().await.insert(uri_str.clone(), None);
                                 backoff = 0;
                             }
-                            Err(_) => {
-                                // Error during connection/handshake
-                                // (handle_connection already logged the details)
+                            Err(e) => {
+                                peer_errors.lock().await.insert(uri_str.clone(), Some(e.to_string()));
                             }
                         }
                     }
                     Ok(Err(e)) => {
-                        tracing::debug!("Failed to connect to {}: {}", target, e);
+                        let err_msg = format!("Failed to connect: {}", e);
+                        tracing::debug!("{} to {}", err_msg, target);
+                        peer_errors.lock().await.insert(uri_str.clone(), Some(err_msg));
                     }
                     Err(_) => {
-                        tracing::debug!("Connection to {} timed out", target);
+                        let err_msg = "Connection timed out".to_string();
+                        tracing::debug!("{}: {}", err_msg, target);
+                        peer_errors.lock().await.insert(uri_str.clone(), Some(err_msg));
                     }
                 }
 
                 if backoff < 32 {
                     backoff += 1;
                 }
-                let wait = Duration::from_secs(1u64 << backoff.min(31))
+                let wait = Duration::from_secs(1u64 << backoff.min(7))
                     .min(options.max_backoff);
 
                 tokio::select! {
@@ -745,6 +773,8 @@ impl Links {
 
             // Also remove from peer_addrs map
             self.peer_addrs.retain(|_, v| v != uri);
+            // Remove error tracking entry
+            self.peer_errors.lock().await.remove(uri);
 
             Ok(())
         } else {
